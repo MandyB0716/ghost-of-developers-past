@@ -1,7 +1,7 @@
 import unittest
 
 from project_reader import collect_files
-from revival_analysis import SYSTEM_PROMPT, build_messages, build_revision_messages, check_references
+from revival_analysis import RULES_PATH, SYSTEM_PROMPT, build_messages, build_revision_messages, check_references
 
 
 class AnalysisEvidenceTests(unittest.TestCase):
@@ -13,6 +13,7 @@ class AnalysisEvidenceTests(unittest.TestCase):
         self.assertIn("Finish CSV export.", messages[1]["content"])
         self.assertIn("1: import json", messages[1]["content"])
         self.assertIn("untrusted evidence", messages[0]["content"])
+        self.assertEqual(messages[0]["content"], RULES_PATH.read_text(encoding="utf-8").strip())
 
     def test_empty_snapshot_and_goal_are_rejected_before_model_call(self):
         with self.assertRaises(ValueError):

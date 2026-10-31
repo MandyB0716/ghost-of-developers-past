@@ -9,6 +9,8 @@ from urllib.error import HTTPError, URLError
 from unittest.mock import patch
 
 from gemma_client import BACKUP_MODEL, MODEL, ProviderBusyError, cloud_value, generate, retry_after_seconds
+from project_reader import collect_files
+from revival_analysis import RULES_PATH, build_messages
 
 
 class CloudLoginTests(unittest.TestCase):
@@ -119,12 +121,13 @@ class RetryTests(unittest.TestCase):
         self.assertEqual(result["attempted_models"], [MODEL])
 
     def test_backup_uses_the_same_messages_without_gemma_specific_options(self):
-        messages = [{"role":"user", "content":"Original project evidence; do not rewrite."}]
+        messages = build_messages(collect_files([("app.py", b"print('example')\n")]), "Review this project.")
         with patch("gemma_client.urlopen", side_effect=[self.failure(), self.failure(), self.failure(), self.response()]) as send:
             result = generate(messages, project="test-project", allow_backup=True)
         bodies = [json.loads(call.args[0].data) for call in send.call_args_list]
         self.assertEqual([body["model"] for body in bodies], [MODEL, MODEL, MODEL, BACKUP_MODEL])
         self.assertTrue(all(body["messages"] == messages for body in bodies))
+        self.assertEqual(bodies[3]["messages"][0]["content"], RULES_PATH.read_text(encoding="utf-8").strip())
         self.assertIn("chat_template_kwargs", bodies[0])
         self.assertNotIn("chat_template_kwargs", bodies[3])
         self.assertTrue(result["fallback_used"])

@@ -2,6 +2,8 @@
 
 [Ghost of Developers Past on GitHub](https://github.com/MandyB0716/ghost-of-developers-past)
 
+[Try the live workbench](https://ghost-of-developers-past.onrender.com/)
+
 A new Hacktoberfest Week 4 project to help developers return to unfinished software.
 The core workflow reads selected project files, uses Gemma to explain the evidence,
 and creates a restart plan with references to the original files. Developers can
@@ -12,6 +14,7 @@ submit feedback, compare versions, and save a restart plan as Markdown or PDF.
 From PowerShell in this folder:
 
 ```powershell
+py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe -B .\app.py
 ```
@@ -53,7 +56,7 @@ The local app loads this project's ignored `.env` without overriding process
 environment variables. It uses your existing Google Cloud CLI login and active
 project unless `GOOGLE_CLOUD_PROJECT` is set. For now it allows at most
 40 analysis operations per server process. This is a local development server.
-Production startup and hosted authentication support are prepared; see
+The public app runs on Render; for production startup and hosted authentication, see
 [Render deployment](docs/DEPLOYMENT.md) for the exact settings and remaining
 credential and live-verification steps.
 
@@ -114,6 +117,15 @@ The same reader can also accept selected files from the future browser interface
 goal. Files are numbered as evidence, and the response is preserved unchanged.
 The local reference check validates source IDs and line ranges; it does not
 establish that a citation supports a claim. We review that together.
+
+Shared model instructions live in `prompts/revival-rules.md`. The application
+loads this trusted file into system messages for new analyses and revisions;
+Grok receives the same reviewed evidence and rules if the bounded fallback is
+needed. It is not a fine-tuning dataset, and uploaded project instructions never
+replace it. The rules require comparing setup/startup commands with supplied
+entry files and manifests, asking for essential missing information, and using
+the viewer's supported file-and-line citation syntax. Instructions guide model
+behavior; they do not prove that every claim is correct.
 
 The included `examples/grant-ledger` is a small unfinished demonstration project,
 not an existing nonprofit system. Its sample records are fictional. The reader
