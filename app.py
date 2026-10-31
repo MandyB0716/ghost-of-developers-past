@@ -131,6 +131,20 @@ def create_app(testing=False):
     def health():
         return jsonify(status="ok")
 
+    @app.post("/api/session/clear")
+    def clear_session():
+        # Require JSON and retain the same origin checks as other mutations.
+        payload()
+        with guard:
+            key = session.get("workspace")
+            state = workspaces.get(key)
+            if state and state["busy"]:
+                return jsonify(error="Wait for the current analysis to finish before clearing this session."), 409
+            workspaces.pop(key, None)
+            session.clear()
+        # Do not reset process-wide model or voice allowances.
+        return jsonify(cleared=True)
+
     @app.get("/api/example")
     def example():
         return store_preview(scan_project(ROOT / "examples" / "grant-ledger"), "Grant Ledger · example project")

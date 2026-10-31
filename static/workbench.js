@@ -4,6 +4,7 @@ const byId = id => document.getElementById(id);
 let candidates = [], projectName = "Your project", ready = false, busy = false, currentVersion = -1;
 function activity(message, error=false) { byId("activity").textContent=message; byId("activity").classList.toggle("error",error); }
 function controls() {
+  ["clear-session","clear-session-confirm","clear-session-cancel"].forEach(id=>{byId(id).disabled=busy;});
   ["folder-button","folder-input","files-input","example-button","restart-goal","version-picker"].forEach(id=>{byId(id).disabled=busy;});
   byId("preview-button").disabled=busy || !candidates.length;
   byId("analyze-button").disabled=busy || !ready;

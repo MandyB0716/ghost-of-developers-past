@@ -58,7 +58,8 @@
         <div class="source-actions"><button id="back-to-project" class="text-button" type="button">Back to Project →</button></div>
       </section>
     </main>
-    <p id="activity" class="preview-status" role="status" aria-live="polite">Choose a project or try the example. Loading an example does not call Gemma.</p>
+    <p id="activity" class="preview-status" role="status" aria-live="polite">{% if request.args.get('cleared') == '1' %}Session cleared. Choose a project whenever you're ready.{% else %}Choose a project or try the example. Loading an example does not call Gemma.{% endif %}</p>
+    <div class="session-controls"><p id="clear-session-help">Finished for now? Save your plan, then clear your session. Your original files and downloads stay on your computer.</p><button id="clear-session" type="button" class="secondary small" aria-describedby="clear-session-help">Clear session</button><div id="clear-session-confirmation" role="group" aria-label="Confirm clearing this session" hidden><p>Save your plan first. Clear the reviewed files, responses and cached narration from this app?</p><div class="session-actions"><button id="clear-session-cancel" type="button" class="secondary small">Keep session</button><button id="clear-session-confirm" type="button" class="secondary small">Yes, clear session</button></div></div></div>
     <footer class="app-footer"><p class="footer-heading">Your Next Chapter</p><p class="footer-tagline">Recover the context. Follow the evidence. Move forward at your own pace.</p></footer>
   </div>
   <script id="reader-policy" type="application/json">{{ reader_policy|tojson }}</script>
@@ -67,5 +68,6 @@
   <script src="{{ url_for('static', filename='project-folder.js') }}" defer></script>
   <script src="{{ url_for('static', filename='workbench.js') }}" defer></script>
   {% if voice_enabled %}<script src="{{ url_for('static', filename='voice.js') }}" defer></script>{% endif %}
+  <script src="{{ url_for('static', filename='session-controls.js') }}" defer></script>
 </body>
 </html>

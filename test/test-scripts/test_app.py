@@ -76,6 +76,19 @@ class WorkbenchTests(unittest.TestCase):
         other=self.app.test_client()
         self.assertEqual(other.get("/api/export").status_code,400)
 
+    def test_exports_preserve_sources_with_trailing_blank_lines(self):
+        self.client.post("/api/preview", json={"files":[
+            {"path":"app.py", "text":"print('ready')\n\n\n\n"}]})
+        result = {**answer(), "content":"Inspect the entry file [F1:L1-L3]."}
+        with patch("app.generate", return_value=result):
+            self.client.post("/api/analyze", json={"goal":"Review the entry file."})
+        markdown = self.client.get("/api/export?format=md")
+        self.assertEqual(markdown.status_code, 200)
+        self.assertIn(b"app.py, lines 1-3", markdown.data)
+        pdf = self.client.get("/api/export?format=pdf")
+        self.assertEqual(pdf.status_code, 200)
+        self.assertTrue(pdf.data.startswith(b"%PDF-"))
+
     def test_busy_service_preserves_the_snapshot_and_previous_plan(self):
         self.client.get("/api/example")
         with patch("app.generate", side_effect=[ProviderBusyError(), answer(),
@@ -121,6 +134,76 @@ class WorkbenchTests(unittest.TestCase):
     def test_cross_origin_posts_are_rejected(self):
         response=self.client.post("/api/preview",json={"files":[]},headers={"Origin":"https://unrelated.example"})
         self.assertEqual(response.status_code,403)
+
+    def test_clear_session_removes_snapshot_history_narration_and_cookie(self):
+        self.client.get("/api/example")
+        original_cookie = self.client.get_cookie("session").value
+        with patch("app.generate", return_value=answer()), patch("app.narrate", return_value=b"synthetic-audio"):
+            self.client.post("/api/analyze", json={"goal":"Finish CSV export."})
+            self.assertEqual(self.client.post("/api/read-aloud", json={"version":0}).status_code, 200)
+        cleared = self.client.post("/api/session/clear", json={})
+        self.assertEqual(cleared.get_json(), {"cleared":True})
+        self.assertIsNone(self.client.get_cookie("session"))
+        # Even a saved copy of the former signed cookie cannot restore the data.
+        self.client.set_cookie("session", original_cookie)
+        with patch("app.generate") as model, patch("app.narrate") as voice:
+            self.assertEqual(self.client.get("/api/version/0").status_code, 400)
+            self.assertEqual(self.client.get("/api/export?version=0").status_code, 400)
+            self.assertEqual(self.client.post("/api/read-aloud", json={"version":0}).status_code, 400)
+            self.assertEqual(self.client.post("/api/analyze", json={"goal":"Resume."}).status_code, 400)
+        model.assert_not_called()
+        voice.assert_not_called()
+
+    def test_clear_session_does_not_affect_another_visitor(self):
+        other = self.app.test_client()
+        self.client.get("/api/example")
+        other.get("/api/example")
+        with patch("app.generate", side_effect=lambda *args: answer()):
+            self.client.post("/api/analyze", json={"goal":"My plan."})
+            other.post("/api/analyze", json={"goal":"Other visitor's plan."})
+        self.client.post("/api/session/clear", json={})
+        self.assertEqual(other.get("/api/version/0").status_code, 200)
+        self.assertEqual(other.get("/api/export").status_code, 200)
+
+    def test_clear_waits_for_an_inflight_analysis(self):
+        self.client.get("/api/example")
+        second_tab = self.app.test_client()
+        second_tab.set_cookie("session", self.client.get_cookie("session").value)
+        def during_generation(*args):
+            blocked = second_tab.post("/api/session/clear", json={})
+            self.assertEqual(blocked.status_code, 409)
+            return answer()
+        with patch("app.generate", side_effect=during_generation):
+            self.assertEqual(self.client.post("/api/analyze", json={"goal":"Review."}).status_code, 200)
+        self.assertEqual(self.client.get("/api/version/0").status_code, 200)
+        self.assertEqual(second_tab.post("/api/session/clear", json={}).status_code, 200)
+        self.assertEqual(self.client.get("/api/version/0").status_code, 400)
+
+    def test_clear_does_not_reset_shared_demo_allowances(self):
+        self.app.config.update(MODEL_CALL_LIMIT=1, VOICE_CALL_LIMIT=1)
+        self.client.get("/api/example")
+        with patch("app.generate", side_effect=lambda *args: answer()), patch("app.narrate", return_value=b"audio"):
+            self.client.post("/api/analyze", json={"goal":"First plan."})
+            self.client.post("/api/read-aloud", json={"version":0})
+            self.client.post("/api/session/clear", json={})
+            self.client.get("/api/example")
+            self.assertEqual(self.client.post("/api/analyze", json={"goal":"New plan."}).status_code, 429)
+        from io import BytesIO
+        with patch("app.transcribe") as speech:
+            self.assertEqual(self.client.post("/api/transcribe", data={"file":(BytesIO(b"audio"),"goal.webm")}).status_code, 400)
+        speech.assert_not_called()
+
+    def test_clear_requires_same_origin_json_and_is_safe_to_repeat(self):
+        self.client.get("/api/example")
+        self.assertEqual(self.client.get("/api/session/clear").status_code, 405)
+        self.assertEqual(self.client.post("/api/session/clear", data={}).status_code, 400)
+        self.assertEqual(self.client.post("/api/session/clear", json={}, headers={"Origin":"https://unrelated.example"}).status_code, 403)
+        self.assertIsNotNone(self.client.get_cookie("session"))
+        with patch("app.generate") as model, patch("app.narrate") as voice:
+            self.assertEqual(self.client.post("/api/session/clear", json={}).status_code, 200)
+            self.assertEqual(self.client.post("/api/session/clear", json={}).status_code, 200)
+        model.assert_not_called()
+        voice.assert_not_called()
 
     def test_answers_to_questions_are_sent_only_when_submitted_and_retained(self):
         self.client.get("/api/example")

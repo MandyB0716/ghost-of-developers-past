@@ -12,11 +12,15 @@ Run the commands below from the project root.
 
 ```powershell
 .\.venv\Scripts\python.exe -B -m unittest discover -s .\test\test-scripts -p "test_*.py" -v
-node --test .\test\test-scripts\test_project_folder.cjs .\test\test-scripts\test_source_navigation.cjs
+node --test .\test\test-scripts\test_project_folder.cjs .\test\test-scripts\test_source_navigation.cjs .\test\test-scripts\test_session_controls.cjs
 ```
 
 Automated tests use synthetic inputs and mocked provider calls. They do not send
 a project to Gemma or use the live ElevenLabs API.
+
+Session-clear checks cover old-cookie replay, visitor isolation, an in-flight
+analysis, unchanged usage allowances, cross-origin rejection, cancelled/failed
+cleanup, and notification of other open workbench tabs.
 
 ## Live Gemma connection diagnostic
 

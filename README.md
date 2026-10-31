@@ -34,7 +34,15 @@ workbench. It is separate from the Project Revival application.
 
 Project text and analysis versions are kept in the server process's memory, not
 written to uploaded project files or an uploads directory. Workspaces expire
-after an hour of inactivity and disappear when the server stops. **Save plan**,
+after an hour of inactivity and disappear when the server stops. Expired entries
+are removed when another snapshot is prepared; closing a tab does not immediately
+remove its server workspace. **Clear session** explicitly removes the current
+browser's workspace, including its snapshot, response history and cached narration,
+and clears its session cookie. Download your plan first. It leaves original project
+files and downloaded plans untouched and does not reset demo usage allowances.
+Other open workbench tabs receive a reset notification when BroadcastChannel is
+available. This does not recall requests already sent to cloud providers or control
+their retention policies. **Save plan**,
 below the response, downloads the selected version as Markdown or PDF, with a
 file-and-line reference list. It does not append source text, prompts, or feedback.
 Exports are generated locally without another AI request. Whole-file citations
@@ -175,7 +183,7 @@ folder. This does not store authentication headers or access tokens.
 
 ```powershell
 .\.venv\Scripts\python.exe -B -m unittest discover -s .\test\test-scripts -p "test_*.py" -v
-node --test .\test\test-scripts\test_project_folder.cjs .\test\test-scripts\test_source_navigation.cjs
+node --test .\test\test-scripts\test_project_folder.cjs .\test\test-scripts\test_source_navigation.cjs .\test\test-scripts\test_session_controls.cjs
 ```
 
 ## Clickable source review

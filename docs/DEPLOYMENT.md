@@ -20,7 +20,9 @@ The `.python-version` file selects Python 3.11 and Render's latest corresponding
 patch version. Gunicorn uses one worker with four request threads, because
 workspaces and version history live in that worker's memory. Use one Render
 instance. Workspaces expire after an hour and are lost on restart or redeploy;
-download a Markdown or PDF plan to keep it. The health check makes no model or
+download a Markdown or PDF plan to keep it. Clear session removes the current
+browser workspace and cookie; it does not reset process-wide usage allowances.
+Closing a tab is not immediate server cleanup. The health check makes no model or
 voice request; provider connectivity needs a separate live test.
 
 ## Environment variables

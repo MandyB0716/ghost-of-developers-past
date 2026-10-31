@@ -32,7 +32,12 @@ def source_snapshot(messages):
             lines = item["numbered_text"].splitlines()
             if any(not line.startswith(f"{i}: ") for i, line in enumerate(lines, 1)):
                 raise ValueError("Saved source line numbers are inconsistent.")
-            text = "\n".join(line.split(": ", 1)[1] for line in lines)
+            content_lines = [line.split(": ", 1)[1] for line in lines]
+            text = "\n".join(content_lines)
+            # A final numbered empty line needs its own terminator; otherwise
+            # splitlines() drops it and exports reject a valid source snapshot.
+            if content_lines and content_lines[-1] == "":
+                text += "\n"
             redacted = tuple(i for i, line in enumerate(text.splitlines(), 1)
                              if line == "[credential-like value omitted]")
             source = SourceFile(item["path"], text, redacted)
