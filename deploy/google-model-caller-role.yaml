@@ -1,0 +1,6 @@
+title: Project Revival Model Caller
+description: Call managed model inference and consume APIs in this project.
+stage: GA
+includedPermissions:
+  - aiplatform.endpoints.predict
+  - serviceusage.services.use

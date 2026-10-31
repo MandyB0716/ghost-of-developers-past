@@ -1,0 +1,4 @@
+[
+  {"organization": "Example Community Fund", "deadline": "2027-02-15", "amount_requested": 5000, "status": "draft"},
+  {"organization": "Example Neighborhood Trust", "deadline": "2027-01-20", "amount_requested": 2500, "status": "submitted"}
+]

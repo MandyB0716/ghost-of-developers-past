@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Project Revival — Return to unfinished work</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='review.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workbench.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="brand-header">
+      <div class="brand">
+        <div class="brand-scene" role="img" aria-label="Ghost wearing a witch hat in front of a gothic bookshelf">
+          <img class="scene-bookshelf" src="{{ url_for('static', filename='images/haunted-bookshelf.png') }}" width="148" height="126" alt="">
+          <img class="scene-ghost" src="{{ url_for('static', filename='images/ghost-mascot.png') }}" width="88" height="88" alt="">
+        </div>
+        <div><div class="brand-line"><span class="brand-name">Project Revival</span><span class="theme-note">GHOST OF DEVELOPERS PAST</span></div><p>Bring unfinished projects back to life.</p></div>
+      </div>
+      <div id="project-chip" class="project-chip" hidden><span class="status-dot" aria-hidden="true"></span><span id="project-chip-name"></span></div>
+    </header>
+    <nav class="tabs" role="tablist" aria-label="Workbench">
+      <button id="tab-project" role="tab" aria-selected="true" aria-controls="panel-project" tabindex="0" type="button">Project</button>
+      <button id="tab-plan" role="tab" aria-selected="false" aria-controls="panel-plan" tabindex="-1" type="button">Restart plan</button>
+      <button id="tab-sources" role="tab" aria-selected="false" aria-controls="panel-sources" tabindex="-1" type="button">Sources <span id="source-count" class="tab-count">0</span></button>
+    </nav>
+    <main>
+      <section id="panel-project" class="tab-panel" role="tabpanel" aria-labelledby="tab-project">
+        <div class="view-heading"><p class="eyebrow">PICK UP WHERE YOU LEFT OFF</p><h1>Start with your project folder.</h1><p>You bring the files. Gemma helps you recover the context and choose a practical next step.</p></div>
+        <div class="project-card surface">
+          <div class="section-title"><h2>Your project</h2><button id="example-button" class="text-button" type="button">Try the example</button></div>
+          <div class="folder-row"><svg class="folder-icon" viewBox="0 0 32 28" fill="none" aria-hidden="true"><path d="M2 5h10l4 4h14v16H2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg><div class="folder-name"><strong id="project-name">No project selected</strong><span id="selection-label">Choose a folder, or try our fictional example.</span></div><button id="folder-button" class="secondary" type="button" aria-describedby="folder-help">Open project folder</button></div>
+          <input id="folder-input" type="file" webkitdirectory directory multiple hidden>
+          <p id="folder-help" class="helper">Choose the top-level folder and confirm with Select folder or Upload. We prepare the file list for you.</p>
+          <details id="selection-details" class="file-review" hidden><summary id="selection-count">Review selected files</summary><ul id="file-list"></ul><button id="preview-button" class="secondary small" type="button" disabled>Review selected files</button></details>
+          <details class="individual-files"><summary>Optional: choose individual files instead</summary><label class="button secondary" for="files-input">Choose individual files</label><input id="files-input" type="file" multiple class="visually-hidden"></details>
+          <p class="privacy-note">Common credential files and generated folders are excluded before review. Up to 40 text files, 64 KB per file and 160 KB total; larger projects receive a partial review.</p>
+          <div class="goal-heading"><label for="restart-goal">What would you like to accomplish?</label>{% if voice_enabled %}<button id="record-button" type="button" class="secondary small" data-recording="false">Speak your goal</button>{% endif %}</div>
+          <textarea id="restart-goal" rows="3" maxlength="4000">Help me understand this unfinished project and identify three practical next steps. Check its startup instructions against the supplied files, and keep the plan simple.</textarea>
+          <div class="project-footer"><p>You review the files before anything is sent to Gemma.{% if grok_backup_enabled %} If its service is busy or times out, the same reviewed files may go to Grok as a backup.{% endif %}</p><button id="analyze-button" type="button" disabled>Build my restart plan <span aria-hidden="true">→</span></button></div>
+        </div>
+      </section>
+      <section id="panel-plan" class="tab-panel" role="tabpanel" aria-labelledby="tab-plan" hidden>
+        <div class="view-heading plan-heading"><div><p id="plan-project-name" class="eyebrow">YOUR RESTART PLAN</p><h1>Your way back into the project.</h1><p>Follow a source link whenever you want to inspect the evidence.</p></div><div id="version-controls" class="version-control" hidden><label for="version-picker">Version</label><select id="version-picker"></select></div></div>
+        <div id="plan-layout" class="plan-layout">
+          <article class="report surface" aria-label="Restart plan">
+            {% if voice_enabled %}<div class="plan-tools"><div class="narration-controls"><button id="read-button" class="secondary small" type="button" disabled>Read aloud</button><button id="stop-audio" class="text-button" type="button" disabled>Stop audio</button></div><span>Voice by ElevenLabs</span></div><audio id="narration" controls hidden preload="none"></audio>{% endif %}
+            <p id="model-status" class="helper" hidden></p>
+            <div id="report-content"><h2>Your project, back in view.</h2><p class="empty">Choose a project in the Project tab, review its files, then build your restart plan.</p></div>
+            <div id="save-panel" class="save-row" aria-label="Save this response" hidden><div><h2>Keep this restart plan</h2><p>The selected version and its reference list.</p></div><div class="save-controls"><div class="format-field"><label for="export-format">Save as</label><select id="export-format"><option value="md">Markdown (.md)</option><option value="pdf">PDF (.pdf)</option></select></div><a id="save-review" class="button save-link" href="/api/export?format=md" download>Save plan</a></div></div>
+            <details id="feedback-panel" class="feedback-area" hidden><summary>Answer questions or request changes</summary><label for="feedback">Your answers or feedback</label><textarea id="feedback" rows="3" maxlength="4000" placeholder="Answer the assistant's questions, or describe a correction you want."></textarea><button id="revise-button" class="secondary" type="button">Update restart plan</button><p>Add the details the assistant asks for, then update your plan. Earlier versions stay available.</p></details>
+          </article>
+          <div id="plan-source-host" class="plan-source-host" hidden></div>
+        </div>
+      </section>
+      <section id="panel-sources" class="tab-panel" role="tabpanel" aria-labelledby="tab-sources" hidden>
+        <div class="view-heading"><p class="eyebrow">THE FILES BEHIND THE PLAN</p><h1>Explore the source.</h1><p>Review the prepared snapshot before building your plan, or follow references afterwards.</p></div>
+        <div id="full-source-host"><aside id="source-viewer" class="evidence surface" aria-label="Source evidence"><div class="evidence-heading"><div class="source-heading"><h2>Source files</h2><button id="close-source-preview" class="text-button" type="button" hidden>Close preview</button></div><label for="file-picker">File</label><select id="file-picker" disabled><option>Review a project to see its files</option></select><p id="source-status" role="status">Choose a file, or follow a reference from the restart plan.</p></div><div class="source-scroll" id="source-content"><p class="source-placeholder">Your source text will appear here.</p></div></aside></div>
+        <div class="source-actions"><button id="back-to-project" class="text-button" type="button">Back to Project →</button></div>
+      </section>
+    </main>
+    <p id="activity" class="preview-status" role="status" aria-live="polite">Choose a project or try the example. Loading an example does not call Gemma.</p>
+    <footer class="app-footer"><p class="footer-heading">Your Next Chapter</p><p class="footer-tagline">Recover the context. Follow the evidence. Move forward at your own pace.</p></footer>
+  </div>
+  <script id="reader-policy" type="application/json">{{ reader_policy|tojson }}</script>
+  <script src="{{ url_for('static', filename='review.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='navigation.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='project-folder.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='workbench.js') }}" defer></script>
+  {% if voice_enabled %}<script src="{{ url_for('static', filename='voice.js') }}" defer></script>{% endif %}
+</body>
+</html>
